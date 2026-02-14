@@ -16,6 +16,16 @@
 - `npm run preview` — 本番ビルドをプレビュー
 - `npm run lint` — ESLint実行
 
+## デプロイ
+- GitHub Pages: https://araki-m.github.io/hondana/
+- `main` ブランチへの push で GitHub Actions が自動デプロイ (`.github/workflows/deploy.yml`)
+- ルーティングは `HashRouter` を使用 (GitHub Pages のサブパス対応)
+- Vite の `base` は `/hondana/` に設定
+
+## バージョン管理
+- `package.json` の `version` と `src/pages/BookListPage.tsx` のバージョン表示を両方更新すること
+- PWAキャッシュがあるため、バージョンを上げないとユーザーに変更が反映されない場合がある
+
 ## ディレクトリ構成
 ```
 src/
@@ -32,7 +42,7 @@ src/
 │   ├── Scanner.tsx        # カメラバーコードスキャナ
 │   └── ConfirmDialog.tsx  # 削除確認ダイアログ
 └── pages/                 # ページコンポーネント
-    ├── BookListPage.tsx   # 本棚一覧 + 検索
+    ├── BookListPage.tsx   # 本棚一覧 + 検索 + バージョン表示
     ├── ScanPage.tsx       # スキャン → API → 登録フロー
     ├── BookFormPage.tsx   # 手動登録・編集フォーム
     └── BookDetailPage.tsx # 詳細 + 編集・削除
@@ -45,3 +55,7 @@ src/
 - ISBNは978/979で始まる13桁のみ有効 (書籍バーコードのみ受付)
 - ISBN重複チェックあり (スキャン時にDB確認)
 - Google Books APIで情報不足の場合は手動入力にフォールバック
+
+## 既知の注意点
+- Scanner コンポーネントはアンマウントせず `display:none` で非表示にする (html5-qrcode の DOM 操作と React の競合を回避するため)
+- Scanner 内で `scanner.stop()` を await してから `scanner.clear()` を実行すること

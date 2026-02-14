@@ -2,12 +2,15 @@
 
 ISBNバーコードをカメラでスキャンして書籍情報を自動取得・管理できるPWAアプリです。
 
+**デモ:** https://araki-m.github.io/hondana/
+
 ## 機能
 
 - **バーコードスキャン** — カメラでISBNバーコードを読み取り、Google Books APIから書籍情報を自動取得
 - **手動登録** — ISBNから検索、または全項目を手動入力して登録
 - **本棚一覧** — 登録した本をグリッド表示、タイトル・著者・ISBNで検索
 - **詳細・編集・削除** — 各本の詳細表示、情報の編集、削除
+- **ISBN重複チェック** — スキャン時にすでに登録済みの本を検出
 - **PWA対応** — ホーム画面にインストール可能、オフラインでも閲覧可能
 
 ## セットアップ
@@ -19,12 +22,14 @@ npm run dev
 
 ブラウザで http://localhost:5173/ を開きます。
 
-## ビルド
+## ビルド・デプロイ
 
 ```bash
 npm run build
 npm run preview
 ```
+
+`main` ブランチへの push で GitHub Pages に自動デプロイされます。
 
 ## 技術スタック
 
@@ -36,12 +41,18 @@ npm run preview
 | 書籍情報API | Google Books API |
 | バーコード読取 | html5-qrcode |
 | PWA | vite-plugin-pwa |
+| デプロイ | GitHub Pages + GitHub Actions |
 
 ## 使い方
 
 1. **スキャンタブ** — カメラを本のバーコード(ISBN)に向けると自動読み取り → 書籍情報を確認して登録
 2. **登録タブ** — ISBNを入力して「検索」ボタンで情報取得、または手動で全項目入力
 3. **本棚タブ** — 登録済みの本を一覧表示、タップで詳細画面へ
+
+## 動作確認済み環境
+
+- iPhone 13 Pro Max / Google Chrome
+- デスクトップ Chrome
 
 ## ライセンス
 
