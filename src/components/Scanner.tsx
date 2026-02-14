@@ -11,24 +11,29 @@ function isValidBookISBN(code: string): boolean {
 }
 
 export default function Scanner({ onScan, active }: Props) {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerId = 'scanner-region';
+  const scannedRef = useRef(false);
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
 
   useEffect(() => {
     if (!active) return;
+    scannedRef.current = false;
 
     const scanner = new Html5Qrcode(containerId);
-    scannerRef.current = scanner;
+    let stopped = false;
 
     scanner
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 280, height: 150 } },
         (decodedText) => {
+          if (scannedRef.current || stopped) return;
           const code = decodedText.replace(/[^0-9]/g, '');
           if (isValidBookISBN(code)) {
+            scannedRef.current = true;
             scanner.stop().catch(() => {});
-            onScan(code);
+            onScanRef.current(code);
           }
         },
         () => {}
@@ -38,10 +43,15 @@ export default function Scanner({ onScan, active }: Props) {
       });
 
     return () => {
+      stopped = true;
       scanner.stop().catch(() => {});
-      scanner.clear();
+      try {
+        scanner.clear();
+      } catch {
+        // DOM already removed by React
+      }
     };
-  }, [active, onScan]);
+  }, [active]);
 
   return <div id={containerId} className="scanner-container" />;
 }

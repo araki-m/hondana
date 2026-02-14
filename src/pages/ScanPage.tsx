@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Scanner from '../components/Scanner';
 import { fetchBookByISBN } from '../api/googleBooks';
@@ -11,16 +11,20 @@ type ScanState =
   | { step: 'preview'; isbn: string; data: Partial<Book> }
   | { step: 'not_found'; isbn: string }
   | { step: 'duplicate'; isbn: string; existingId: number }
-  | { step: 'error'; message: string };
+  | { step: 'error'; isbn: string; message: string };
 
 export default function ScanPage() {
   const [state, setState] = useState<ScanState>({ step: 'scanning' });
   const navigate = useNavigate();
+  const processingRef = useRef(false);
 
-  const handleScan = useCallback(
-    async (isbn: string) => {
-      setState({ step: 'loading', isbn });
+  const handleScan = useCallback(async (isbn: string) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
 
+    setState({ step: 'loading', isbn });
+
+    try {
       // 重複チェック
       const existing = await findByISBN(isbn);
       if (existing) {
@@ -28,19 +32,23 @@ export default function ScanPage() {
         return;
       }
 
-      try {
-        const data = await fetchBookByISBN(isbn);
-        if (data && data.title) {
-          setState({ step: 'preview', isbn, data });
-        } else {
-          setState({ step: 'not_found', isbn });
-        }
-      } catch {
-        setState({ step: 'error', message: '書籍情報の取得に失敗しました。' });
+      const data = await fetchBookByISBN(isbn);
+      if (data && data.title) {
+        setState({ step: 'preview', isbn, data });
+      } else {
+        setState({ step: 'not_found', isbn });
       }
-    },
-    []
-  );
+    } catch (e) {
+      console.error('スキャン処理エラー:', e);
+      setState({
+        step: 'error',
+        isbn,
+        message: '書籍情報の取得に失敗しました。',
+      });
+    } finally {
+      processingRef.current = false;
+    }
+  }, []);
 
   async function handleRegister(data: Partial<Book>, isbn: string) {
     const newId = await addBook({
@@ -58,6 +66,7 @@ export default function ScanPage() {
   }
 
   function reset() {
+    processingRef.current = false;
     setState({ step: 'scanning' });
   }
 
@@ -174,12 +183,28 @@ export default function ScanPage() {
 
       {state.step === 'error' && (
         <div className="card scan-result">
-          <p style={{ marginBottom: 12, color: 'var(--color-danger)' }}>
+          <p style={{ marginBottom: 4, color: 'var(--color-danger)' }}>
             {state.message}
           </p>
-          <button className="btn btn-primary btn-block" onClick={reset}>
-            やり直す
-          </button>
+          <p style={{ marginBottom: 12, fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
+            ISBN: {state.isbn}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={() => navigate(`/add?isbn=${state.isbn}`)}
+            >
+              手動で登録
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={reset}
+            >
+              やり直す
+            </button>
+          </div>
         </div>
       )}
     </>
