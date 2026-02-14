@@ -18,7 +18,7 @@ export default function BookListPage() {
       <SearchBar onSearch={handleSearch} />
       <BookGrid books={books} />
       <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 24 }}>
-        v0.2.0
+        v0.3.0
       </p>
     </>
   );

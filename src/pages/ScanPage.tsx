@@ -5,8 +5,6 @@ import { fetchBookByISBN } from '../api/googleBooks';
 import { addBook, findByISBN } from '../hooks/useBooks';
 import type { Book } from '../types/book';
 
-const DEBUG = true;
-
 type ScanState =
   | { step: 'scanning' }
   | { step: 'loading'; isbn: string }
@@ -17,53 +15,29 @@ type ScanState =
 
 export default function ScanPage() {
   const [state, setState] = useState<ScanState>({ step: 'scanning' });
-  const [debugLog, setDebugLog] = useState<string[]>([]);
   const navigate = useNavigate();
   const processingRef = useRef(false);
 
-  function log(msg: string) {
-    const ts = new Date().toLocaleTimeString();
-    setDebugLog((prev) => [...prev, `[${ts}] ${msg}`]);
-    console.log('[ScanPage]', msg);
-  }
-
   const handleScan = useCallback(async (isbn: string) => {
-    log(`onScan called: isbn=${isbn}`);
-
-    if (processingRef.current) {
-      log('SKIP: already processing');
-      return;
-    }
+    if (processingRef.current) return;
     processingRef.current = true;
 
-    log('setState → loading');
     setState({ step: 'loading', isbn });
 
     try {
-      log('findByISBN start');
       const existing = await findByISBN(isbn);
-      log(`findByISBN result: ${existing ? `found id=${existing.id}` : 'not found'}`);
-
       if (existing) {
         setState({ step: 'duplicate', isbn, existingId: existing.id! });
-        log('setState → duplicate');
         return;
       }
 
-      log('fetchBookByISBN start');
       const data = await fetchBookByISBN(isbn);
-      log(`fetchBookByISBN result: ${data ? `title=${data.title}` : 'null'}`);
-
       if (data && data.title) {
         setState({ step: 'preview', isbn, data });
-        log('setState → preview');
       } else {
         setState({ step: 'not_found', isbn });
-        log('setState → not_found');
       }
-    } catch (e) {
-      const errMsg = e instanceof Error ? e.message : String(e);
-      log(`ERROR: ${errMsg}`);
+    } catch {
       setState({
         step: 'error',
         isbn,
@@ -71,9 +45,7 @@ export default function ScanPage() {
       });
     } finally {
       processingRef.current = false;
-      log('processing complete');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleRegister(data: Partial<Book>, isbn: string) {
@@ -93,7 +65,6 @@ export default function ScanPage() {
 
   function reset() {
     processingRef.current = false;
-    setDebugLog([]);
     setState({ step: 'scanning' });
   }
 
@@ -103,7 +74,6 @@ export default function ScanPage() {
     <>
       <h2 className="page-title">バーコードスキャン</h2>
 
-      {/* Scanner は常にDOMに存在させ、非表示で制御する（アンマウントしない） */}
       <div style={{ display: isScanning ? 'block' : 'none' }}>
         <Scanner onScan={handleScan} active={isScanning} />
         <p className="scan-status">
@@ -233,28 +203,6 @@ export default function ScanPage() {
               やり直す
             </button>
           </div>
-        </div>
-      )}
-
-      {DEBUG && debugLog.length > 0 && (
-        <div style={{
-          marginTop: 24,
-          padding: 12,
-          background: '#1a1a2e',
-          color: '#0f0',
-          borderRadius: 8,
-          fontSize: '0.72rem',
-          fontFamily: 'monospace',
-          maxHeight: 200,
-          overflow: 'auto',
-          wordBreak: 'break-all',
-        }}>
-          <div style={{ marginBottom: 4, color: '#ff0', fontWeight: 700 }}>
-            DEBUG (state: {state.step})
-          </div>
-          {debugLog.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
         </div>
       )}
     </>
