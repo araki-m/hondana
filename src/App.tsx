@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Layout from './components/Layout';
 import BookListPage from './pages/BookListPage';
@@ -8,7 +8,7 @@ import BookDetailPage from './pages/BookDetailPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<BookListPage />} />
@@ -18,6 +18,6 @@ export default function App() {
           <Route path="/book/:id" element={<BookDetailPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

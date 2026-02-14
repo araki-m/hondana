@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/hondana/',
   plugins: [
     react(),
     VitePWA({
@@ -15,8 +16,8 @@ export default defineConfig({
         theme_color: '#8b5e3c',
         background_color: '#faf6f1',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/hondana/',
+        start_url: '/hondana/',
         icons: [
           {
             src: 'pwa-192x192.png',
