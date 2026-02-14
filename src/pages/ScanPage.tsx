@@ -97,18 +97,19 @@ export default function ScanPage() {
     setState({ step: 'scanning' });
   }
 
+  const isScanning = state.step === 'scanning';
+
   return (
     <>
       <h2 className="page-title">バーコードスキャン</h2>
 
-      {state.step === 'scanning' && (
-        <>
-          <Scanner onScan={handleScan} active />
-          <p className="scan-status">
-            本のバーコード(ISBN)にカメラを向けてください
-          </p>
-        </>
-      )}
+      {/* Scanner は常にDOMに存在させ、非表示で制御する（アンマウントしない） */}
+      <div style={{ display: isScanning ? 'block' : 'none' }}>
+        <Scanner onScan={handleScan} active={isScanning} />
+        <p className="scan-status">
+          本のバーコード(ISBN)にカメラを向けてください
+        </p>
+      </div>
 
       {state.step === 'loading' && (
         <div className="scan-status">

@@ -12,27 +12,44 @@ function isValidBookISBN(code: string): boolean {
 
 export default function Scanner({ onScan, active }: Props) {
   const containerId = 'scanner-region';
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannedRef = useRef(false);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
   useEffect(() => {
-    if (!active) return;
-    scannedRef.current = false;
+    if (!active) {
+      // active が false になったらスキャナを停止
+      const scanner = scannerRef.current;
+      if (scanner) {
+        scanner
+          .stop()
+          .then(() => {
+            try { scanner.clear(); } catch { /* ignore */ }
+          })
+          .catch(() => {
+            try { scanner.clear(); } catch { /* ignore */ }
+          });
+        scannerRef.current = null;
+      }
+      return;
+    }
 
+    // active が true: スキャナを開始
+    scannedRef.current = false;
     const scanner = new Html5Qrcode(containerId);
-    let stopped = false;
+    scannerRef.current = scanner;
 
     scanner
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 280, height: 150 } },
         (decodedText) => {
-          if (scannedRef.current || stopped) return;
+          if (scannedRef.current) return;
           const code = decodedText.replace(/[^0-9]/g, '');
           if (isValidBookISBN(code)) {
             scannedRef.current = true;
-            scanner.stop().catch(() => {});
+            // stop せずにコールバックだけ呼ぶ。停止は active=false 経由で行う
             onScanRef.current(code);
           }
         },
@@ -43,13 +60,15 @@ export default function Scanner({ onScan, active }: Props) {
       });
 
     return () => {
-      stopped = true;
-      scanner.stop().catch(() => {});
-      try {
-        scanner.clear();
-      } catch {
-        // DOM already removed by React
-      }
+      scannerRef.current = null;
+      scanner
+        .stop()
+        .then(() => {
+          try { scanner.clear(); } catch { /* ignore */ }
+        })
+        .catch(() => {
+          try { scanner.clear(); } catch { /* ignore */ }
+        });
     };
   }, [active]);
 
